@@ -6,20 +6,6 @@
 #include <errno.h>
 #include <string.h>
 
-#define typename(x) _Generic((x),                                                 \
-        _Bool: "_Bool",                  unsigned char: "unsigned char",          \
-         char: "char",                     signed char: "signed char",            \
-    short int: "short int",         unsigned short int: "unsigned short int",     \
-          int: "int",                     unsigned int: "unsigned int",           \
-     long int: "long int",           unsigned long int: "unsigned long int",      \
-long long int: "long long int", unsigned long long int: "unsigned long long int", \
-        float: "float",                         double: "double",                 \
-  long double: "long double",                   char *: "pointer to char",        \
-       void *: "pointer to void",                int *: "pointer to int",         \
- OpusEncoder*: "OpusEncoder*",       const opus_int16*: "const opus_int16*",      \
-unsigned char*: "unsigned char*",          opus_int16*: "opus_int16*",            \
-      default: "other")
-
 #define APPLICATION OPUS_APPLICATION_AUDIO
 
 typedef struct _OpusOptions {
