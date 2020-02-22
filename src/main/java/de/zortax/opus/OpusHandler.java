@@ -1,12 +1,9 @@
 package de.zortax.opus;
 
-import java.nio.ByteBuffer;
-
 public class OpusHandler {
 
   static {
     System.loadLibrary("opus_jni");
-    System.load("/usr/lib/libopus.so");
   }
 
   public native long createEncoder(OpusOptions opts);

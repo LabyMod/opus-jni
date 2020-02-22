@@ -27,20 +27,23 @@ typedef struct _OpusDecodeInfo {
     OpusOptions opts;
 } OpusDecodeInfo;
 
-jbyteArray as_byte_array(JNIEnv *env, unsigned char* buf, int len) {
-    jbyteArray array = (*env)->NewByteArray (env, len);
+jbyteArray as_byte_array(JNIEnv *env, unsigned char* buf, int len)
+{
+    jbyteArray array = (*env)->NewByteArray(env, len);
     (*env)->SetByteArrayRegion (env, array, 0, len, (jbyte*) (buf));
     return array;
 }
 
-unsigned char* as_unsigned_char_array(JNIEnv *env, jbyteArray array) {
-    int len = (*env)->GetArrayLength (env, array);
+unsigned char* as_unsigned_char_array(JNIEnv *env, jbyteArray array)
+{
+    int len = (*env)->GetArrayLength(env, array);
     unsigned char* buf = (unsigned char*) malloc(len * sizeof(unsigned char));
     (*env)->GetByteArrayRegion (env, array, 0, len, (jbyte*) (buf));
     return buf;
 }
 
-OpusOptions readOpusOptions(JNIEnv *env, jobject obj) {
+OpusOptions readOpusOptions(JNIEnv *env, jobject obj)
+{
     OpusOptions opts;
 
     jclass clsOpusOptions;

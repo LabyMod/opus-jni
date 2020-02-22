@@ -57,16 +57,10 @@ public class OpusOptions {
     private int sampleRate = 48000;
     private int channels = 1;
     private int bitrate = 64000;
-    private int maxFrameSize = 6*960;
-    private int maxPacketSize = 3*1276;
+    private int maxFrameSize = 6 * 960;
+    private int maxPacketSize = 3 * 1276;
 
-    private OpusOptionsBuilder() {
-
-    }
-
-    public static OpusOptionsBuilder anOpusOptions() {
-      return new OpusOptionsBuilder();
-    }
+    private OpusOptionsBuilder() {}
 
     public OpusOptionsBuilder setFrameSize(int frameSize) {
       this.frameSize = frameSize;
