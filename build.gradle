@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'c'
+}
+
+group 'de.zortax'
+version '1.0'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+model {
+    platforms {
+        x64 {
+            architecture "x64"
+        }
+    }
+    repositories {
+        libs(PrebuiltLibraries) {
+            opus {
+                binaries.withType(SharedLibraryBinary) {
+                    sharedLibraryFile = file('/usr/lib/libopus.so')
+                }
+            }
+        }
+    }
+
+    components {
+        opus_jni(NativeLibrarySpec) {
+            sources {
+                c {
+                    lib library: 'opus', linkage: 'shared'
+                }
+            }
+            binaries.all {
+                if (targetPlatform.operatingSystem.linux) {
+                    cCompiler.args '-I', "${org.gradle.internal.jvm.Jvm.current().javaHome}/include"
+                    cCompiler.args '-I', "${org.gradle.internal.jvm.Jvm.current().javaHome}/include/linux"
+                    cCompiler.args '-I', "/usr/include/opus"
+                    cCompiler.args '-D_FILE_OFFSET_BITS=64'
+                }
+            }
+        }
+    }
+}
+
+
+
+test.dependsOn 'opus_jniSharedLibrary'
