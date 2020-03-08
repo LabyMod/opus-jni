@@ -8,23 +8,23 @@
 
 #define APPLICATION OPUS_APPLICATION_AUDIO
 
-typedef struct _OpusOptions {
+typedef struct _OpusCodecOptions {
     int frameSize;
     int sampleRate;
     int channels;
     int bitrate;
     int maxFrameSize;
     int maxPacketSize;
-} OpusOptions;
+} OpusCodecOptions;
 
 typedef struct _OpusEncodeInfo {
     OpusEncoder* encoder;
-    OpusOptions opts;
+    OpusCodecOptions opts;
 } OpusEncodeInfo;
 
 typedef struct _OpusDecodeInfo {
     OpusDecoder* decoder;
-    OpusOptions opts;
+    OpusCodecOptions opts;
 } OpusDecodeInfo;
 
 jbyteArray as_byte_array(JNIEnv *env, unsigned char* buf, int len)
@@ -42,11 +42,11 @@ unsigned char* as_unsigned_char_array(JNIEnv *env, jbyteArray array)
     return buf;
 }
 
-OpusOptions readOpusOptions(JNIEnv *env, jobject obj)
+OpusCodecOptions readOpusCodecOptions(JNIEnv *env, jobject obj)
 {
-    OpusOptions opts;
+    OpusCodecOptions opts;
 
-    jclass clsOpusOptions;
+    jclass clsOpusCodecOptions;
 
     jfieldID fFrameSize;
     jfieldID fSampleRate;
@@ -56,14 +56,14 @@ OpusOptions readOpusOptions(JNIEnv *env, jobject obj)
     jfieldID fMaxPacketSize;
 
 
-    clsOpusOptions = (*env)->GetObjectClass(env, obj);
+    clsOpusCodecOptions = (*env)->GetObjectClass(env, obj);
 
-    fFrameSize = (*env)->GetFieldID(env, clsOpusOptions, "frameSize", "I");
-    fSampleRate = (*env)->GetFieldID(env, clsOpusOptions, "sampleRate", "I");
-    fChannels = (*env)->GetFieldID(env, clsOpusOptions, "channels", "I");
-    fBitrate = (*env)->GetFieldID(env, clsOpusOptions, "bitrate", "I");
-    fMaxFrameSize = (*env)->GetFieldID(env, clsOpusOptions, "maxFrameSize", "I");
-    fMaxPacketSize = (*env)->GetFieldID(env, clsOpusOptions, "maxPacketSize", "I");
+    fFrameSize = (*env)->GetFieldID(env, clsOpusCodecOptions, "frameSize", "I");
+    fSampleRate = (*env)->GetFieldID(env, clsOpusCodecOptions, "sampleRate", "I");
+    fChannels = (*env)->GetFieldID(env, clsOpusCodecOptions, "channels", "I");
+    fBitrate = (*env)->GetFieldID(env, clsOpusCodecOptions, "bitrate", "I");
+    fMaxFrameSize = (*env)->GetFieldID(env, clsOpusCodecOptions, "maxFrameSize", "I");
+    fMaxPacketSize = (*env)->GetFieldID(env, clsOpusCodecOptions, "maxPacketSize", "I");
 
     opts.frameSize = (*env)->GetIntField(env, obj, fFrameSize);
     opts.sampleRate = (*env)->GetIntField(env, obj, fSampleRate);
@@ -75,14 +75,14 @@ OpusOptions readOpusOptions(JNIEnv *env, jobject obj)
     return opts;
 }
 
-JNIEXPORT jlong JNICALL Java_de_zortax_opus_OpusHandler_createEncoder(JNIEnv *env, jobject inst, jobject obj)
+JNIEXPORT jlong JNICALL Java_net_labymod_opus_OpusCodec_createEncoder(JNIEnv *env, jobject inst, jobject obj)
 {
     OpusEncoder *encoder;
-    OpusOptions opts;
+    OpusCodecOptions opts;
     OpusEncodeInfo* info = (OpusEncodeInfo*) malloc(sizeof(OpusEncodeInfo));
     int err;
 
-    opts = readOpusOptions(env, obj);
+    opts = readOpusCodecOptions(env, obj);
     encoder = opus_encoder_create((opus_int32) opts.sampleRate, opts.channels, APPLICATION, &err);
     if (err < 0) {
         fprintf(stderr, "failed to create encoder: %s\n", opus_strerror(err));
@@ -98,17 +98,17 @@ JNIEXPORT jlong JNICALL Java_de_zortax_opus_OpusHandler_createEncoder(JNIEnv *en
     info->encoder = encoder;
     info->opts = opts;
 
-    return (long) info;
+    return (jlong) info;
 }
 
-JNIEXPORT jlong JNICALL Java_de_zortax_opus_OpusHandler_createDecoder(JNIEnv *env, jobject inst, jobject obj)
+JNIEXPORT jlong JNICALL Java_net_labymod_opus_OpusCodec_createDecoder(JNIEnv *env, jobject inst, jobject obj)
 {
     OpusDecoder *decoder;
-    OpusOptions opts;
+    OpusCodecOptions opts;
     OpusDecodeInfo* info = (OpusDecodeInfo*) malloc(sizeof(OpusDecodeInfo));
     int err;
 
-    opts = readOpusOptions(env, obj);
+    opts = readOpusCodecOptions(env, obj);
     decoder = opus_decoder_create(opts.sampleRate, opts.channels, &err);
     if (err < 0) {
         fprintf(stderr, "failed to create decoder: %s\n", opus_strerror(err));
@@ -119,10 +119,10 @@ JNIEXPORT jlong JNICALL Java_de_zortax_opus_OpusHandler_createDecoder(JNIEnv *en
     info->decoder = decoder;
     info->opts = opts;
 
-    return (long) info;
+    return (jlong) info;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_de_zortax_opus_OpusHandler_encodeFrame(JNIEnv *env, jobject inst, jlong pointer, jbyteArray in_buff)
+JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_encodeFrame(JNIEnv *env, jobject inst, jlong pointer, jbyteArray in_buff, jint in_buff_offset, jint in_buff_length)
 {
     OpusEncodeInfo* info = (OpusEncodeInfo*) pointer;
     int i, nbBytes;
@@ -131,8 +131,8 @@ JNIEXPORT jbyteArray JNICALL Java_de_zortax_opus_OpusHandler_encodeFrame(JNIEnv 
     unsigned char* cbits = (unsigned char*) malloc(info->opts.maxPacketSize);
     opus_int16 in[info->opts.frameSize * info->opts.channels * 2];
 
-    for (i = 0; i < info->opts.frameSize * info->opts.channels; i++) {
-        in[i] = pcm_bytes[2*i+1] << 8 | pcm_bytes[2*i];
+    for (i = 0; i < in_buff_length / 2; i++) {
+        in[i] = pcm_bytes[in_buff_offset+ 2*i+1] << 8 | pcm_bytes[in_buff_offset +2*i];
     }
     nbBytes = opus_encode(info->encoder, in, info->opts.frameSize, cbits, info->opts.maxPacketSize);
     if (nbBytes < 0) {
@@ -144,7 +144,7 @@ JNIEXPORT jbyteArray JNICALL Java_de_zortax_opus_OpusHandler_encodeFrame(JNIEnv 
     return out;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_de_zortax_opus_OpusHandler_decodeFrame(JNIEnv *env, jobject inst, jlong pointer, jbyteArray in_buff)
+JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_decodeFrame(JNIEnv *env, jobject inst, jlong pointer, jbyteArray in_buff)
 {
     OpusDecodeInfo* info = (OpusDecodeInfo*) pointer;
     int i, frame_size, len, out_len;
@@ -173,14 +173,14 @@ JNIEXPORT jbyteArray JNICALL Java_de_zortax_opus_OpusHandler_decodeFrame(JNIEnv 
 }
 
 
-JNIEXPORT void JNICALL Java_de_zortax_opus_OpusHandler_destroyEncoder(JNIEnv *env, jobject inst, jlong pointer)
+JNIEXPORT void JNICALL Java_net_labymod_opus_OpusCodec_destroyEncoder(JNIEnv *env, jobject inst, jlong pointer)
 {
     OpusEncodeInfo* info = (OpusEncodeInfo*) pointer;
     opus_encoder_destroy(info->encoder);
     free(info);
 }
 
-JNIEXPORT void JNICALL Java_de_zortax_opus_OpusHandler_destroyDecoder(JNIEnv *env, jobject inst, jlong pointer)
+JNIEXPORT void JNICALL Java_net_labymod_opus_OpusCodec_destroyDecoder(JNIEnv *env, jobject inst, jlong pointer)
 {
     OpusDecodeInfo* info = (OpusDecodeInfo*) pointer;
     opus_decoder_destroy(info->decoder);
