@@ -1,6 +1,6 @@
 # opus-jni
 
-This is a very simple and comfortable to use JNI wrapper for the Opus codec,
+opus-jni is a very simple and comfortable to use JNI wrapper for the Opus codec,
 created by [Jan Brachthäuser](https://github.com/jan-br) and [Leonard Seibold](https://github.com/zortax) for [LabyMod](https://github.com/LabyMod)
 It might lack a few functions of the original Opus codec specifications but should be perfectly fine for most usecases.
 
