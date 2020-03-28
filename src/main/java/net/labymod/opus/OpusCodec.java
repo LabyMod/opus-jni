@@ -58,6 +58,10 @@ public class OpusCodec {
     return newBuilder().build();
   }
 
+  public static OpusCodec createByOptions(OpusCodecOptions opusCodecOptions) {
+    return new OpusCodec(opusCodecOptions);
+  }
+
   public static Builder newBuilder() {
     return new Builder();
   }
