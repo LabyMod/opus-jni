@@ -242,16 +242,16 @@ public class OpusCodec {
       fieldSysPath.set(null, null);
 
       if (property.contains("nux") || property.contains("nix")) {
-        Files.copy(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream("native/64/linux/libopus.so")), new File(tmp, "libopus.so").toPath());
-        Files.copy(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream("native/64/linux/libopus_jni.so")), new File(tmp, "libopus_jni.so").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus.so")), new File(tmp, "libopus.so").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus_jni.so")), new File(tmp, "libopus_jni.so").toPath());
         System.loadLibrary("libopus");
         System.loadLibrary("libopus_jni");
       } else if (property.contains("mac")) {
-        Files.copy(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream("native/64/mac/libopus_jni.dylib")), new File(tmp, "libopus_jni.dylib").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/mac/libopus_jni.dylib")), new File(tmp, "libopus_jni.dylib").toPath());
         System.loadLibrary("libopus_jni");
       } else if (property.contains("windows")) {
-        Files.copy(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream("native/64/windows/libopus-0.dll")), new File(tmp, "libopus-0.dll").toPath());
-        Files.copy(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream("native/64/windows/libopus-0_jni.dll")), new File(tmp, "libopus-0_jni.dll").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0.dll")), new File(tmp, "libopus-0.dll").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0_jni.dll")), new File(tmp, "libopus-0_jni.dll").toPath());
         System.loadLibrary("libopus-0");
         System.loadLibrary("libopus-0_jni");
       }
