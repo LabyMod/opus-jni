@@ -1,12 +1,15 @@
 package net.labymod.opus;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
-import java.util.Objects;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
 
 /*
 opus-jni, a simple Opus JNI Wrapper.
@@ -219,6 +222,57 @@ public class OpusCodec {
 
   }
 
+  public static void extractNatives(File destination) {
+    try {
+      String property = System.getProperty("os.name", "bare-metal?").toLowerCase();
+      if (property.contains("nux") || property.contains("nix")) {
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus.so")), new File(destination, "libopus.so").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus_jni.so")), new File(destination, "libopus_jni.so").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        System.loadLibrary("libopus");
+        System.loadLibrary("libopus_jni");
+      } else if (property.contains("mac")) {
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/mac/libopus_jni.dylib")), new File(destination, "libopus_jni.dylib").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        System.loadLibrary("libopus_jni");
+      } else if (property.contains("windows")) {
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0.dll")), new File(destination, "libopus-0.dll").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0_jni.dll")), new File(destination, "libopus-0_jni.dll").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        System.loadLibrary("libopus-0");
+        System.loadLibrary("libopus-0_jni");
+      }
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  private static List<String> getResourceFiles(String path) throws IOException {
+    List<String> filenames = new ArrayList<>();
+
+    try (InputStream in = OpusCodec.class.getClassLoader().getResourceAsStream(path);
+         BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+      String resource;
+
+      while ((resource = br.readLine()) != null) {
+        filenames.add(resource);
+      }
+    }
+
+    return filenames;
+  }
+
+  public static void loadNatives() {
+    String property = System.getProperty("os.name", "bare-metal?").toLowerCase();
+
+    if (property.contains("nux") || property.contains("nix")) {
+      System.loadLibrary("libopus");
+      System.loadLibrary("libopus_jni");
+    } else if (property.contains("mac")) {
+      System.loadLibrary("libopus_jni");
+    } else if (property.contains("windows")) {
+      System.loadLibrary("libopus-0");
+      System.loadLibrary("libopus-0_jni");
+    }
+  }
+
   /**
    * extract the necessary native library to the tmp folder, modifies the path and loads the necessary OS.
    * <p>
@@ -243,15 +297,15 @@ public class OpusCodec {
 
       if (property.contains("nux") || property.contains("nix")) {
         Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus.so")), new File(tmp, "libopus.so").toPath());
-        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus_jni.so")), new File(tmp, "libopus_jni.so").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/linux/libopus_jni.so")), new File(tmp, "libopus_jni.so").toPath(), StandardCopyOption.REPLACE_EXISTING);
         System.loadLibrary("libopus");
         System.loadLibrary("libopus_jni");
       } else if (property.contains("mac")) {
-        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/mac/libopus_jni.dylib")), new File(tmp, "libopus_jni.dylib").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/mac/libopus_jni.dylib")), new File(tmp, "libopus_jni.dylib").toPath(), StandardCopyOption.REPLACE_EXISTING);
         System.loadLibrary("libopus_jni");
       } else if (property.contains("windows")) {
-        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0.dll")), new File(tmp, "libopus-0.dll").toPath());
-        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0_jni.dll")), new File(tmp, "libopus-0_jni.dll").toPath());
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0.dll")), new File(tmp, "libopus-0.dll").toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(Objects.requireNonNull(OpusCodec.class.getClassLoader().getResourceAsStream("native/64/windows/libopus-0_jni.dll")), new File(tmp, "libopus-0_jni.dll").toPath(), StandardCopyOption.REPLACE_EXISTING);
         System.loadLibrary("libopus-0");
         System.loadLibrary("libopus-0_jni");
       }
