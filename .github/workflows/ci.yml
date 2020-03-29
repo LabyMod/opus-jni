@@ -22,13 +22,13 @@ jobs:
           java-version: 8
       - name: Make gradlew executable (Unix)
         run: "chmod +x gradlew"
-        if: matrix.os != "windows-latest"
+        if: runner.os != 'Windows'
       - name: Build native with gradle (Unix)
         run: "./gradlew -Pci=true opus-jni-native:build"
-        if: matrix.os != "windows-latest"
+        if: runner.os != 'Windows'
       - name: Build native with gradle (Windows)
         run: "gradlew -Pci=true opus-jni-native:build"
-        if: matrix.os == "windows-latest"
+        if: runner.os == 'Windows'
       - name: Prepare artifacts
         shell: bash
         run: |
