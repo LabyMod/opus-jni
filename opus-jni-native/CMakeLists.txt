@@ -4,6 +4,14 @@
 project(opus-jni-native)
 cmake_minimum_required(VERSION 3.1)
 
+##############################
+# Set global compile options #
+##############################
+if(UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
+
 ############################
 # Add 3rd party libraries #
 ###########################
