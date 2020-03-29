@@ -1,0 +1,22 @@
+import net.jan.gradle.cmake.tasks.CMakeBuildTask
+
+buildscript {
+    dependencies {
+        classpath files("gradle-cmake.jar")
+    }
+}
+
+apply plugin: "net.jan.gradle.cmake"
+
+task build(type: CMakeBuildTask) {
+    sourceDirectory file(".")
+    generationDirectory new File(buildDir, "cmake-gen")
+
+    cmake {
+        variables = [
+                "CMAKE_BUILD_TYPE": java.util.Optional.of("Release"),
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": java.util.Optional.of(nativeBinariesDir.absolutePath),
+                "GENERATED_JNI_HEADERS_DIR": java.util.Optional.of(generatedHeadersDir.absolutePath)
+        ]
+    }
+}

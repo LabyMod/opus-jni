@@ -1,0 +1,3 @@
+[submodule "opus-jni-native/3rdparty/opus"]
+	path = opus-jni-native/3rdparty/opus
+	url = https://github.com/xiph/opus

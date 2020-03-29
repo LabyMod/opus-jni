@@ -1,2 +1,4 @@
 rootProject.name = 'opus-jni'
+include 'opus-jni-java'
+include 'opus-jni-native'
 
