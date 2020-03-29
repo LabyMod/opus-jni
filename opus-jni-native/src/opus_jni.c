@@ -140,6 +140,7 @@ JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_encodeFrame(
     nbBytes = opus_encode(info->encoder, in, info->opts.frameSize, cbits, info->opts.maxPacketSize);
     if(nbBytes < 0) {
         fprintf(stderr, "encode failed: %s\n", opus_strerror(nbBytes));
+        return (*env)->NewByteArray(env, 0);
     }
     out = as_byte_array(env, cbits, nbBytes);
 
@@ -165,6 +166,7 @@ JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_decodeFrame(JNIEnv 
     frame_size = opus_decode(info->decoder, cbits, len, out, info->opts.maxFrameSize, 0);
     if(frame_size < 0) {
         fprintf(stderr, "decoder failed\n");
+        return (*env)->NewByteArray(env, 0);
     }
 
     out_len = info->opts.channels * frame_size * 2;
