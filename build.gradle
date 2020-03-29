@@ -35,13 +35,14 @@ if(!project.hasProperty("nativeBinaryExternalDir")) {
     }
 } else {
     def nativeBinaryExternalDir = file(project.property("nativeBinaryExternalDir").toString())
-    if(!ext.nativeBinaryExternalDir.exists()) {
+    if(!nativeBinaryExternalDir.exists()) {
         throw new GradleException("nativeBinaryExternalDir ${nativeBinaryExternalDir.absolutePath} does not exist")
     }
 
     ext.nativeBinaries = new ArrayList<File>()
 
     for(def file in nativeBinaryExternalDir.listFiles()) {
+        println "Found native binary ${file.absolutePath}"
         ext.nativeBinaries.add(file)
     }
 
