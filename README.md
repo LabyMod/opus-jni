@@ -5,6 +5,8 @@ opus-jni is a very simple and comfortable to use JNI wrapper for the
 It might lack a few functions of the original Opus codec specifications but should be perfectly
 fine for most usecases.
 
+![CI](https://github.com/LabyMod/opus-jni/workflows/CI/badge.svg)
+
 See [here](./opus-jni-java/src/test/java/net/labymod/opus/MinimalEchoExample.java) for a very
 simple and complete echo example.
 ## How to use:
