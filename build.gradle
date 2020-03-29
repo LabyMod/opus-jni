@@ -14,6 +14,7 @@ if(!ext.nativeBinariesDir.exists() && !ext.nativeBinariesDir.mkdirs()) {
 }
 
 def isExternalBuild = false
+def ciBuild = project.hasProperty("CI") && Boolean.parseBoolean(project.property("CI").toString())
 
 if(!project.hasProperty("nativeBinaryExternalDir")) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -53,6 +54,19 @@ project(":opus-jni-java").afterEvaluate { javaProject ->
 
         if(!isExternalBuild) {
             javaProject.tasks["processResources"].dependsOn(nativeProject.tasks["build"])
+        }
+    }
+}
+
+if(ciBuild) {
+    def ciDir = file("ci")
+    if(!ciDir.exists() && !ciDir.mkdirs()) {
+        throw new GradleException("Failed to create directory ${ciDir.absolutePath}")
+    }
+
+    new File(ciDir, "binaries").withWriter {
+        for(File binary in ext.nativeBinaries) {
+            it.write(binary.absolutePath)
         }
     }
 }
