@@ -56,6 +56,7 @@ For further details, refer to the [Github workflow](./.github/workflows/ci.yml).
 - Recommended bitrates for your purpose found 
   [here](https://wiki.xiph.org/index.php?title=Opus_Recommended_Settings&mobileaction=toggle_view_desktop)
 - The default codec settings should be fine for every simple VoIP communication
+- Unused instances of OpusCodec must be removed to prevent memory leaks with ```OpusCodec#destroy```. This might not be critical when using only a fixed amount of instances, but can get dangerous when those instances have a life cycle and might be recreated once in a while.
 
 #### Create a codec instance:
 ###### Default settings
