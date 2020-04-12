@@ -130,6 +130,9 @@ public class OpusCodec {
   public void destroy() {
     if (this.encoderInitialized) this.destroyEncoder(this.encoderState);
     if (this.decoderInitialized) this.destroyDecoder(this.decoderState);
+
+    this.encoderInitialized = false;
+    this.decoderInitialized = false;
   }
 
   private native void destroyEncoder(long encoder);
