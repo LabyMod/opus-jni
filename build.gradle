@@ -116,13 +116,17 @@ if(ciBuild) {
         }
     }
 
+    def binaries = ext.nativeBinaries
+
     task moveNativeBinaries {
-        for(File binary in ext.nativeBinaries) {
-            processBinary(binary, true)
+        doLast {
+            for (File binary in binaries) {
+                processBinary(binary, true)
+            }
         }
     }
 
     project("opus-jni-native").afterEvaluate { nativeProject ->
-        nativeProject.task["build"].finalizedBy(moveNativeBinaries)
+        nativeProject.tasks["build"].finalizedBy(moveNativeBinaries)
     }
 }
