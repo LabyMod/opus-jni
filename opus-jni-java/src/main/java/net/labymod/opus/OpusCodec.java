@@ -213,20 +213,52 @@ public class OpusCodec {
     public OpusCodec build() {
       return new OpusCodec(OpusCodecOptions.of(frameSize, sampleRate, channels, bitrate, maxFrameSize, maxPacketSize));
     }
-
   }
 
   private static String getNativeLibraryName() {
+    String bitnessArch = System.getProperty("os.arch").toLowerCase();
+    String bitnessDataModel = System.getProperty("sun.arch.data.model", null);
+    if(bitnessDataModel != null) {
+      bitnessArch = bitnessDataModel.toLowerCase();
+    }
+
+    boolean is64bit = bitnessArch.contains("64");
+    if(is64bit) {
+      String library64 = processLibraryName("opus-jni-native-64");
+      if(hasResource("/native-binaries/" + library64)) {
+        return library64;
+      }
+    } else {
+      String library32 = processLibraryName("opus-jni-native-32");
+      if(hasResource("/native-binaries/" + library32)) {
+        return library32;
+      }
+    }
+
+    String library = processLibraryName("opus-jni-native");
+    if(!hasResource("/native-binaries/" + library)) {
+      throw new NoSuchElementException("No binary for the current system found, even after trying bit neutral names");
+    } else {
+      return library;
+    }
+  }
+
+  private static String processLibraryName(String library) {
     String systemName = System.getProperty("os.name", "bare-metal?").toLowerCase();
+
     if (systemName.contains("nux") || systemName.contains("nix")) {
-      return "libopus-jni-native.so";
+      return "lib" + library + ".so";
     } else if (systemName.contains("mac")) {
-      return "libopus-jni-native.dylib";
+      return "lib" + library + ".dylib";
     } else if (systemName.contains("windows")) {
-      return "opus-jni-native.dll";
+      return library + ".dll";
     } else {
       throw new NoSuchElementException("No native library for system " + systemName);
     }
+  }
+
+  private static boolean hasResource(String resource) {
+    return OpusCodec.class.getResource(resource) != null;
   }
 
   public static void extractNatives(File directory) throws IOException {

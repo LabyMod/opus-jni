@@ -19,7 +19,7 @@ def ciBuild = project.hasProperty("CI") && Boolean.parseBoolean(project.property
 if(!project.hasProperty("nativeBinaryExternalDir")) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         // WARNING, this assumes CMake uses visual studio
-        // For GCC or Clang the output should be $nativeBinariesDir/libopus-jni-natibe.dll
+        // For GCC or Clang the output should be $nativeBinariesDir/libopus-jni-native.dll
         ext.nativeBinaries = Arrays.asList(new File(nativeBinariesDir, "Debug/opus-jni-native.dll"))
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         ext.nativeBinaries = Arrays.asList(new File(nativeBinariesDir, "libopus-jni-native.dylib"))
@@ -49,6 +49,12 @@ if(!project.hasProperty("nativeBinaryExternalDir")) {
     isExternalBuild = true
 }
 
+if(project.hasProperty("32bit")) {
+    ext.is32bit = true
+} else {
+    ext.is32bit = false
+}
+
 project(":opus-jni-java").afterEvaluate { javaProject ->
     project("opus-jni-native").afterEvaluate { nativeProject ->
         nativeProject.tasks["build"].dependsOn(javaProject.tasks["generateJniHeaders"])
@@ -56,6 +62,26 @@ project(":opus-jni-java").afterEvaluate { javaProject ->
         if(!isExternalBuild) {
             javaProject.tasks["processResources"].dependsOn(nativeProject.tasks["build"])
         }
+    }
+}
+
+def getExtension(File file) {
+    String fileName = file.getName()
+
+    if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+        return fileName.substring(fileName.lastIndexOf(".") + 1)
+    } else {
+        return ""
+    }
+}
+
+def getPathWithoutExtension(File file) {
+    String fileName = file.getAbsolutePath()
+
+    if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+        return fileName.substring(0, fileName.lastIndexOf("."))
+    } else {
+        return ""
     }
 }
 
@@ -67,6 +93,21 @@ if(ciBuild) {
 
     new File(ciDir, "binaries").withWriter {
         for(File binary in ext.nativeBinaries) {
+            String extension = getExtension(binary)
+            String path = getPathWithoutExtension(binary)
+
+            File newPath = null
+            if(ext.is32bit) {
+                newPath = new File(path + "-32" + extension)
+                binary.renameTo(newPath)
+            } else {
+                newPath = new File(path + "-64" + extension)
+            }
+
+            println "Moving ${binary.absolutePath} tp ${newPath.absolutePath}"
+            binary.renameTo(newPath)
+            binary = newPath
+
             it.write(binary.absolutePath)
         }
     }
