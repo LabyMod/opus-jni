@@ -85,6 +85,25 @@ def getPathWithoutExtension(File file) {
     }
 }
 
+def processBinary(File binary, boolean doMove) {
+    String extension = getExtension(binary)
+    String path = getPathWithoutExtension(binary)
+
+    File newPath = null
+    if(ext.is32bit) {
+        newPath = new File(path + "-32." + extension)
+    } else {
+        newPath = new File(path + "-64." + extension)
+    }
+
+    if(doMove) {
+        println "Moving ${binary.absolutePath} to ${newPath.absolutePath}"
+        binary.renameTo(newPath)
+    }
+
+    return newPath
+}
+
 if(ciBuild) {
     def ciDir = file("ci")
     if(!ciDir.exists() && !ciDir.mkdirs()) {
@@ -93,22 +112,17 @@ if(ciBuild) {
 
     new File(ciDir, "binaries").withWriter {
         for(File binary in ext.nativeBinaries) {
-            String extension = getExtension(binary)
-            String path = getPathWithoutExtension(binary)
-
-            File newPath = null
-            if(ext.is32bit) {
-                newPath = new File(path + "-32" + extension)
-                binary.renameTo(newPath)
-            } else {
-                newPath = new File(path + "-64" + extension)
-            }
-
-            println "Moving ${binary.absolutePath} tp ${newPath.absolutePath}"
-            binary.renameTo(newPath)
-            binary = newPath
-
-            it.write(binary.absolutePath)
+            it.write(processBinary(binary, false).absolutePath)
         }
+    }
+
+    task moveNativeBinaries {
+        for(File binary in ext.nativeBinaries) {
+            processBinary(binary, true)
+        }
+    }
+
+    project("opus-jni-native").afterEvaluate { nativeProject ->
+        nativeProject.task["build"].finalizedBy(moveNativeBinaries)
     }
 }
