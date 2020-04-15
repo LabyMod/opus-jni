@@ -4,6 +4,11 @@
 cmake_policy(SET CMP0091 NEW)
 cmake_policy(SET CMP0048 NEW)
 
+#####################
+# Pre project setup #
+#####################
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10")
+
 #################
 # Project setup #
 #################
