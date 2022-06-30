@@ -1,5 +1,7 @@
 .idea/
+.vscode/
 build/
 cmake-build*/
 .gradle/
 *.log
+.DS_Store

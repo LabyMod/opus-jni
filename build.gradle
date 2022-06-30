@@ -57,7 +57,7 @@ if(project.hasProperty("32bit")) {
 
 project(":opus-jni-java").afterEvaluate { javaProject ->
     project("opus-jni-native").afterEvaluate { nativeProject ->
-        nativeProject.tasks["build"].dependsOn(javaProject.tasks["generateJniHeaders"])
+        nativeProject.tasks["build"].dependsOn(javaProject.tasks["compileJava"])
 
         if(!isExternalBuild) {
             javaProject.tasks["processResources"].dependsOn(nativeProject.tasks["build"])
