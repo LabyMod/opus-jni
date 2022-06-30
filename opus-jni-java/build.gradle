@@ -7,13 +7,6 @@ plugins {
 group 'net.labymod'
 version '1.0'
 
-jar {
-    from {
-        // TODO: use shadow plugin
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
-
 static def osDependentBinary(name) {
     return Os.isFamily(Os.FAMILY_WINDOWS) ? "${name}.exe" : name
 }
@@ -30,8 +23,8 @@ static def findJavaH() {
 
         def path = System.getenv("PATH")
         if (path != null) {
-            String paths = path.split(File.pathSeparator);
-            for (def currentPath in paths) {
+            def paths = path.split(File.pathSeparator)
+            for (def currentPath : paths) {
                 javaHBinary = new File(currentPath, osDependentBinary("javah"))
                 if (javaHBinary.exists()) {
                     return javaHBinary.absolutePath
@@ -46,37 +39,15 @@ static def findJavaH() {
 
 def javaHCommand = findJavaH()
 
-task generateJniHeaders(dependsOn: compileJava) {
-    doFirst {
-        fileTree(generatedHeadersDir).each {
-            it.delete()
-        }
-    }
-
-    doLast {
-        if (exec {
-            commandLine javaHCommand,
-                    "-jni",
-                    "-cp", tasks.compileJava.destinationDir.getAbsolutePath() + File.pathSeparator +
-                           sourceSets.main.compileClasspath.asPath,
-                    "-d", generatedHeadersDir,
-                    "net.labymod.opus.OpusCodec"
-
-            standardOutput = prefixedOutputStream("[JNI | GEN | INFO] ", System.out)
-            errorOutput = prefixedOutputStream("[JNI | GEN | ERR] ", System.err)
-        }.exitValue != 0) {
-            throw new GradleException("Failed to generate JNI headers")
-        }
-    }
-}
-
 processResources {
     from(nativeBinaries) {
         into "native-binaries"
     }
 }
 
-compileJava.finalizedBy generateJniHeaders
+compileJava {
+    options.compilerArgs += ["-h", generatedHeadersDir.getAbsolutePath()]
+}
 
 OutputStream prefixedOutputStream(String prefix, OutputStream parentStream) {
     OutputStream ret = new OutputStream() {
