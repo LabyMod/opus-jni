@@ -221,12 +221,10 @@ public class OpusCodec {
   private static String getNativeLibraryName() {
     String bitnessArch = System.getProperty("os.arch").toLowerCase();
     String bitnessDataModel = System.getProperty("sun.arch.data.model", null);
-    if(bitnessDataModel != null) {
-      bitnessArch = bitnessDataModel.toLowerCase();
-    }
 
-    boolean is64bit = bitnessArch.contains("64");
+    boolean is64bit = bitnessArch.contains("64") || (bitnessDataModel != null && bitnessDataModel.contains("64"));
     String arch = bitnessArch.startsWith("aarch") ? "arm" : "";
+
     if(is64bit) {
       String library64 = processLibraryName("opus-jni-native-" + arch + "64");
       if(hasResource("/native-binaries/" + library64)) {
