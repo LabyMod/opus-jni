@@ -226,13 +226,14 @@ public class OpusCodec {
     }
 
     boolean is64bit = bitnessArch.contains("64");
+    String arch = bitnessArch.startsWith("aarch") ? "arm" : "";
     if(is64bit) {
-      String library64 = processLibraryName("opus-jni-native-64");
+      String library64 = processLibraryName("opus-jni-native-" + arch + "64");
       if(hasResource("/native-binaries/" + library64)) {
         return library64;
       }
     } else {
-      String library32 = processLibraryName("opus-jni-native-32");
+      String library32 = processLibraryName("opus-jni-native-" + arch + "32");
       if(hasResource("/native-binaries/" + library32)) {
         return library32;
       }
