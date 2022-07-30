@@ -2,6 +2,7 @@ package net.labymod.opus;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
@@ -218,12 +219,12 @@ public class OpusCodec {
     }
   }
 
-  private static String getNativeLibraryName() {
+  private static String getNativeLibraryName(boolean allowArm) {
     String bitnessArch = System.getProperty("os.arch").toLowerCase();
     String bitnessDataModel = System.getProperty("sun.arch.data.model", null);
 
     boolean is64bit = bitnessArch.contains("64") || (bitnessDataModel != null && bitnessDataModel.contains("64"));
-    String arch = bitnessArch.startsWith("aarch") ? "arm" : "";
+    String arch = bitnessArch.startsWith("aarch") && allowArm ? "arm" : "";
 
     if(is64bit) {
       String library64 = processLibraryName("opus-jni-native-" + arch + "64");
@@ -263,14 +264,20 @@ public class OpusCodec {
     return OpusCodec.class.getResource(resource) != null;
   }
 
-  public static void extractNatives(File directory) throws IOException {
-    String nativeLibraryName = getNativeLibraryName();
-    Files.copy(OpusCodec.class.getResourceAsStream("/native-binaries/" + nativeLibraryName),
-            directory.toPath().resolve(nativeLibraryName), StandardCopyOption.REPLACE_EXISTING);
+  public static void loadNative(File directory) throws IOException {
+    loadNative(directory, true);
   }
 
-  public static void loadNative(File directory) {
-    System.load(new File(directory, getNativeLibraryName()).getAbsolutePath());
+  public static void loadNative(File directory, boolean allowArm) throws IOException {
+    String nativeLibraryName = getNativeLibraryName(allowArm);
+    InputStream source = OpusCodec.class.getResourceAsStream("/native-binaries/" + nativeLibraryName);
+    if (source == null) {
+        throw new IOException("Could not find native library " + nativeLibraryName);
+    }
+
+    Path destination = directory.toPath().resolve(nativeLibraryName);
+    Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+    System.load(new File(directory, nativeLibraryName).getAbsolutePath());
   }
 
   /**
@@ -282,7 +289,14 @@ public class OpusCodec {
   public static void setupWithTemporaryFolder() throws IOException {
     File temporaryDir = Files.createTempDirectory("opus-jni").toFile();
     temporaryDir.deleteOnExit();
-    extractNatives(temporaryDir);
-    loadNative(temporaryDir);
+
+    try {
+        loadNative(temporaryDir);
+    } catch (UnsatisfiedLinkError e) {
+        e.printStackTrace();
+
+        // Try without ARM support
+        loadNative(temporaryDir, false);
+    }
   }
 }
