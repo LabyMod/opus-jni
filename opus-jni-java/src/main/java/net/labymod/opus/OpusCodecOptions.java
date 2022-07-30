@@ -28,27 +28,27 @@ public class OpusCodecOptions {
     }
 
     public int getFrameSize() {
-        return frameSize;
+        return this.frameSize;
     }
 
     public int getSampleRate() {
-        return sampleRate;
+        return this.sampleRate;
     }
 
     public int getChannels() {
-        return channels;
+        return this.channels;
     }
 
     public int getBitrate() {
-        return bitrate;
+        return this.bitrate;
     }
 
     public int getMaxFrameSize() {
-        return maxFrameSize;
+        return this.maxFrameSize;
     }
 
     public int getMaxPacketSize() {
-        return maxPacketSize;
+        return this.maxPacketSize;
     }
 
     protected static OpusCodecOptions of(int frameSize, int sampleRate, int channels, int bitrate, int maxFrameSize, int maxPacketSize) {

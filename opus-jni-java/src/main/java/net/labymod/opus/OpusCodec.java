@@ -88,8 +88,8 @@ public class OpusCodec {
      * throws {@link IllegalArgumentException} if length is invalid
      */
     public byte[] encodeFrame(byte[] bytes, int offset, int length) {
-        if (length != getChannels() * getFrameSize() * 2)
-            throw new IllegalArgumentException(String.format("data length must be == CHANNELS * FRAMESIZE * 2 (%d bytes) but is %d bytes", getChannels() * getFrameSize() * 2, bytes.length));
+        if (length != this.getChannels() * this.getFrameSize() * 2)
+            throw new IllegalArgumentException(String.format("data length must be == CHANNELS * FRAMESIZE * 2 (%d bytes) but is %d bytes", this.getChannels() * this.getFrameSize() * 2, bytes.length));
         this.ensureEncoderExistence();
         return this.encodeFrame(this.encoderState, bytes, offset, length);
     }
@@ -217,7 +217,7 @@ public class OpusCodec {
         }
 
         public OpusCodec build() {
-            return new OpusCodec(OpusCodecOptions.of(frameSize, sampleRate, channels, bitrate, maxFrameSize, maxPacketSize));
+            return new OpusCodec(OpusCodecOptions.of(this.frameSize, this.sampleRate, this.channels, this.bitrate, this.maxFrameSize, this.maxPacketSize));
         }
     }
 
