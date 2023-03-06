@@ -3,6 +3,7 @@ package net.labymod.opus;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -278,7 +279,11 @@ public class OpusCodec {
         }
 
         Path destination = directory.toPath().resolve(nativeLibraryName);
-        Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AccessDeniedException ignored) {
+            // The file already exists, or we don't have permission to write to the directory
+        }
         System.load(new File(directory, nativeLibraryName).getAbsolutePath());
     }
 
