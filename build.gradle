@@ -1,14 +1,14 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-group 'net.labymod'
-version '1.0'
+group = 'net.labymod'
+version = '1.0'
 
-ext.generatedHeadersDir = new File(buildDir, "generatedHeaders")
+ext.generatedHeadersDir = layout.buildDirectory.dir("generatedHeaders").get().asFile
 if(!ext.generatedHeadersDir.exists() && !ext.generatedHeadersDir.mkdirs()) {
     throw new GradleException("Failed to create directory ${ext.generatedHeadersDir.absolutePath}")
 }
 
-ext.nativeBinariesDir = new File(buildDir, "nativeBinaries")
+ext.nativeBinariesDir = layout.buildDirectory.dir("nativeBinaries").get().asFile
 if(!ext.nativeBinariesDir.exists() && !ext.nativeBinariesDir.mkdirs()) {
     throw new GradleException("Failed to create directory ${ext.nativeBinariesDir.absolutePath}")
 }
@@ -20,7 +20,7 @@ if(!project.hasProperty("nativeBinaryExternalDir")) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         // WARNING, this assumes CMake uses visual studio
         // For GCC or Clang the output should be $nativeBinariesDir/libopus-jni-native.dll
-        ext.nativeBinaries = Arrays.asList(new File(nativeBinariesDir, "Debug/opus-jni-native.dll"))
+        ext.nativeBinaries = Arrays.asList(new File(nativeBinariesDir, "Release/opus-jni-native.dll"))
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         ext.nativeBinaries = Arrays.asList(new File(nativeBinariesDir, "libopus-jni-native.dylib"))
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
@@ -89,11 +89,14 @@ def processBinary(File binary, boolean doMove) {
     String extension = getExtension(binary)
     String path = getPathWithoutExtension(binary)
 
+    String osArch = System.getProperty("os.arch").toLowerCase()
+    boolean isArm = osArch.startsWith("aarch") || osArch.startsWith("arm")
+
     File newPath = null
     if(ext.is32bit) {
-        newPath = new File(path + "-32." + extension)
+        newPath = new File(path + (isArm ? "-arm32" : "-32") + "." + extension)
     } else {
-        newPath = new File(path + "-64." + extension)
+        newPath = new File(path + (isArm ? "-arm64" : "-64") + "." + extension)
     }
 
     if(doMove) {
@@ -118,7 +121,7 @@ if(ciBuild) {
 
     def binaries = ext.nativeBinaries
 
-    task moveNativeBinaries {
+    tasks.register('moveNativeBinaries') {
         doLast {
             for (File binary in binaries) {
                 processBinary(binary, true)
@@ -127,6 +130,6 @@ if(ciBuild) {
     }
 
     project("opus-jni-native").afterEvaluate { nativeProject ->
-        nativeProject.tasks["build"].finalizedBy(moveNativeBinaries)
+        nativeProject.tasks["build"].finalizedBy(tasks.named('moveNativeBinaries'))
     }
 }

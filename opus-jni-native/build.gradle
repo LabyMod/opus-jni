@@ -1,41 +1,39 @@
-import net.jan.gradle.cmake.tasks.CMakeBuildTask
 import org.apache.tools.ant.taskdefs.condition.Os
 
-buildscript {
-    dependencies {
-        classpath files("gradle-cmake.jar")
-    }
+def cmakeGenDir = layout.buildDirectory.dir("cmake-gen").get().asFile
+if (!cmakeGenDir.exists() && !cmakeGenDir.mkdirs()) {
+    throw new GradleException("Failed to create directory ${cmakeGenDir.absolutePath}")
 }
 
-apply plugin: "net.jan.gradle.cmake"
-
-task build(type: CMakeBuildTask) {
-    sourceDirectory file(".")
-    generationDirectory new File(buildDir, "cmake-gen")
-
-    cmake {
-        if(is32bit) {
-            if(!Os.isFamily(Os.FAMILY_WINDOWS)) {
-                throw new GradleException("Only windows supports 32bit currently")
-            } else {
-                arguments = [
-                        "-A", "Win32",
-                        "-T", "host=x64"
-                ]
-            }
-        } else if(Os.isFamily(Os.FAMILY_WINDOWS)) {
-            arguments = [
-                    "-A", "x64",
-                    "-T", "host=x64"
-            ]
-        }
-
-        variables = [
-                "CMAKE_BUILD_TYPE": java.util.Optional.of("Release"),
-                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": java.util.Optional.of(nativeBinariesDir.absolutePath),
-                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": java.util.Optional.of(nativeBinariesDir.absolutePath),
-                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": java.util.Optional.of(nativeBinariesDir.absolutePath),
-                "GENERATED_JNI_HEADERS_DIR": java.util.Optional.of(generatedHeadersDir.absolutePath)
-        ]
+def cmakeArgs = []
+if (is32bit) {
+    if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+        throw new GradleException("Only windows supports 32bit currently")
+    } else {
+        cmakeArgs += ["-A", "Win32", "-T", "host=x64"]
     }
+} else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    cmakeArgs += ["-A", "x64", "-T", "host=x64"]
+}
+
+task cmakeGenerate(type: Exec) {
+    workingDir cmakeGenDir
+    commandLine(["cmake", file(".").absolutePath] + cmakeArgs + [
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+            "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${nativeBinariesDir.absolutePath}",
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${nativeBinariesDir.absolutePath}",
+            "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${nativeBinariesDir.absolutePath}",
+            "-DGENERATED_JNI_HEADERS_DIR=${generatedHeadersDir.absolutePath}"
+    ])
+}
+
+task cmakeCompile(type: Exec) {
+    dependsOn cmakeGenerate
+    workingDir cmakeGenDir
+    commandLine "cmake", "--build", ".", "--config", "Release"
+}
+
+task build {
+    dependsOn cmakeCompile
 }

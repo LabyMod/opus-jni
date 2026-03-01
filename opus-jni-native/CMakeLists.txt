@@ -7,13 +7,13 @@ cmake_policy(SET CMP0048 NEW)
 #####################
 # Pre project setup #
 #####################
+cmake_minimum_required(VERSION 3.5)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "Minimum OS X deployment version" FORCE)
 
 #################
 # Project setup #
 #################
 project(opus-jni-native)
-cmake_minimum_required(VERSION 3.1)
 
 ##############################
 # Set global compile options #

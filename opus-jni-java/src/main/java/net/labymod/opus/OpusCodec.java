@@ -101,11 +101,19 @@ public class OpusCodec {
      * Decodes a chunk of opus encoded pcm data.
      *
      * @param bytes data to decode. Length may vary because the less complex the encoded pcm data is, the compressed data size is smaller.
-     * @return encoded data.
+     * @return decoded PCM data with a guaranteed length of CHANNELS * FRAMESIZE * 2 bytes.
+     *         If decoding fails or produces an undersized frame, the result is padded with silence.
      */
     public byte[] decodeFrame(byte[] bytes) {
         this.ensureDecoderExistence();
-        return this.decodeFrame(this.decoderState, bytes);
+        byte[] decoded = this.decodeFrame(this.decoderState, bytes);
+        int expectedLength = this.getChannels() * this.getFrameSize() * 2;
+        if (decoded.length != expectedLength) {
+            byte[] padded = new byte[expectedLength];
+            System.arraycopy(decoded, 0, padded, 0, Math.min(decoded.length, expectedLength));
+            return padded;
+        }
+        return decoded;
     }
 
     private native byte[] decodeFrame(long decoder, byte[] out);

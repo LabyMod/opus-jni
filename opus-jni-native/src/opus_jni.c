@@ -91,12 +91,15 @@ JNIEXPORT jlong JNICALL Java_net_labymod_opus_OpusCodec_createEncoder(JNIEnv *en
     encoder = opus_encoder_create((opus_int32) opts.sampleRate, opts.channels, APPLICATION, &err);
     if(err < 0) {
         fprintf(stderr, "failed to create encoder: %s\n", opus_strerror(err));
+        free(info);
         return -1;
     }
 
     err = opus_encoder_ctl(encoder, OPUS_SET_BITRATE(opts.bitrate));
     if(err < 0) {
         fprintf(stderr, "failed to set bitrate: %s\n", opus_strerror(err));
+        opus_encoder_destroy(encoder);
+        free(info);
         return -1;
     }
 
@@ -116,6 +119,7 @@ JNIEXPORT jlong JNICALL Java_net_labymod_opus_OpusCodec_createDecoder(JNIEnv *en
     decoder = opus_decoder_create(opts.sampleRate, opts.channels, &err);
     if(err < 0) {
         fprintf(stderr, "failed to create decoder: %s\n", opus_strerror(err));
+        free(info);
         return -1;
     }
 
@@ -140,6 +144,9 @@ JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_encodeFrame(
     nbBytes = opus_encode(info->encoder, in, info->opts.frameSize, cbits, info->opts.maxPacketSize);
     if(nbBytes < 0) {
         fprintf(stderr, "encode failed: %s\n", opus_strerror(nbBytes));
+        free(in);
+        free(cbits);
+        free(pcm_bytes);
         return (*env)->NewByteArray(env, 0);
     }
     out = as_byte_array(env, cbits, nbBytes);
@@ -156,23 +163,41 @@ JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_decodeFrame(JNIEnv 
                                                                          jlong pointer,
                                                                          jbyteArray in_buff) {
     OpusDecodeInfo *info = (OpusDecodeInfo *) pointer;
-    int i, frame_size, len, out_len;
+    int i, frame_size, len, expected_samples, out_len;
     jbyteArray out_buff;
     unsigned char *pcm_bytes;
     unsigned char *cbits = as_unsigned_char_array(env, in_buff);
     opus_int16 *out = malloc(sizeof(opus_int16) * info->opts.maxFrameSize * info->opts.channels);
 
+    /* Expected output size is always channels * frameSize * 2 bytes */
+    expected_samples = info->opts.channels * info->opts.frameSize;
+    out_len = expected_samples * 2;
+
     len = (*env)->GetArrayLength(env, in_buff);
     frame_size = opus_decode(info->decoder, cbits, len, out, info->opts.maxFrameSize, 0);
     if(frame_size < 0) {
-        fprintf(stderr, "decoder failed\n");
-        return (*env)->NewByteArray(env, 0);
+        fprintf(stderr, "decoder failed: %s\n", opus_strerror(frame_size));
+        /* Return a silent frame of the expected size instead of an empty array
+         * to prevent downstream crashes from undersized buffers */
+        free(out);
+        free(cbits);
+        pcm_bytes = (unsigned char *) calloc(out_len, sizeof(unsigned char));
+        out_buff = as_byte_array(env, pcm_bytes, out_len);
+        free(pcm_bytes);
+        return out_buff;
     }
 
-    out_len = info->opts.channels * frame_size * 2;
-    pcm_bytes = (unsigned char *) malloc(out_len);
+    pcm_bytes = (unsigned char *) calloc(out_len, sizeof(unsigned char));
 
-    for(i = 0; i < info->opts.channels * frame_size; i++) {
+    /* Only copy as many samples as were actually decoded, up to the expected amount.
+     * If frame_size < frameSize, the remaining bytes stay zero (silence).
+     * If frame_size > frameSize, we clamp to avoid buffer overflow. */
+    int samples_to_copy = info->opts.channels * frame_size;
+    if(samples_to_copy > expected_samples) {
+        samples_to_copy = expected_samples;
+    }
+
+    for(i = 0; i < samples_to_copy; i++) {
         pcm_bytes[2 * i] = out[i] & 0xFF;
         pcm_bytes[2 * i + 1] = (out[i] >> 8) & 0xFF;
     }
@@ -180,6 +205,7 @@ JNIEXPORT jbyteArray JNICALL Java_net_labymod_opus_OpusCodec_decodeFrame(JNIEnv 
     out_buff = as_byte_array(env, pcm_bytes, out_len);
     free(out);
     free(pcm_bytes);
+    free(cbits);
     return out_buff;
 }
 

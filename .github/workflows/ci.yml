@@ -6,20 +6,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, macos-26-intel, ubuntu-latest]
 
     name: ${{ matrix.os }} build
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 8
+          distribution: 'zulu'
+          java-version: 25
       - name: Make gradlew executable
         run: "chmod +x gradlew"
       - name: Build native with gradle
@@ -33,9 +34,9 @@ jobs:
             cp "${file}" artifacts
           done
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: native-binaries
+          name: native-binaries-${{ matrix.os }}
           path: artifacts
 
   build-binaries-windows:
@@ -49,13 +50,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 8
+          distribution: 'zulu'
+          java-version: 25
       - name: Build native with gradle (Windows)
         run: gradlew -PCI=true opus-jni-native:build -P${{ matrix.arch }}
         shell: cmd
@@ -68,9 +70,9 @@ jobs:
             cp "${file}" artifacts
           done
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: native-binaries
+          name: native-binaries-windows-${{ matrix.arch }}
           path: artifacts
 
   build-jar:
@@ -81,24 +83,26 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 8
+          distribution: 'zulu'
+          java-version: 25
       - name: Download existing artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
-          name: native-binaries
+          pattern: native-binaries-*
           path: native-binaries
+          merge-multiple: true
       - name: Make gradlew executable
         run: "chmod +x gradlew"
       - name: Build final jar with gradle
         run: "./gradlew -PCI=true -PnativeBinaryExternalDir=native-binaries opus-jni-java:build"
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: Final artifacts
           path: opus-jni-java/build/libs/
